@@ -1,0 +1,86 @@
+,Ticker,Name,Category
+1,F_AD,Australian Dollar,Currency
+2,F_BO,Soybean Oil,Agriculture
+3,F_BP,British Pound,Currency
+4,F_C,Corn,Agriculture
+5,F_CC,Cocoa,Agriculture
+6,F_CD,Canadian Dollar,Currency
+7,F_CL,WTI Crude Oil,Energy
+8,F_CT,Cotton,Agriculture
+9,F_DX,US Dollar Index,Currency
+10,F_EC,Euro FX,Currency
+11,F_ED,Eurodollars,Interest Rate
+12,F_ES,E-mini S&P 500 Index,Index
+13,F_FC,Feeder Cattle,Agriculture
+14,F_FV,5-year Treasury Note,Bond
+15,F_GC,Gold,Metal
+16,F_HG,Copper,Metal
+17,F_HO,Heating Oil,Energy
+18,F_JY,Japanese Yen,Currency
+19,F_KC,Coffee,Agriculture
+20,F_LB,Lumber,Agriculture
+21,F_LC,Live Cattle,Agriculture
+22,F_LN,Lean Hogs,Agriculture
+23,F_MD,E-mini S&P 400,Index
+24,F_MP,Mexican Peso,Currency
+25,F_NG,Natural Gas,Energy
+26,F_NQ,E-mini Nasdaq 100 Index,Index
+27,F_NR,Rough Rice,Agriculture
+28,F_O,Oats,Agriculture
+29,F_OJ,Orange Juice,Agriculture
+30,F_PA,Palladium,Metal
+31,F_PL,Platinum,Metal
+32,F_RB,Gasoline,Energy
+33,F_RU,Russell 2000,Index
+34,F_S,Soybeans,Agriculture
+35,F_SB,Sugar,Agriculture
+36,F_SF,Swiss Franc,Currency
+37,F_SI,Silver,Metal
+38,F_SM,Soybean Meal,Agriculture
+39,F_TU,2-year Treasury Note,Bond
+40,F_TY,10-year Treasury Note,Bond
+41,F_US,30-year Treasury Bond,Bond
+42,F_W,Wheat,Agriculture
+43,F_XX,Dow Jones STOXX 50,Index
+44,F_YM,E-mini Dow Jones Industrial Average,Index
+45,F_AX,DAX,Index
+46,F_CA,CAC40,Index
+47,F_DT,EURO Bond,Bond
+48,F_UB,EURO Bobl,Bond
+49,F_UZ,EURO Schatz,Bond
+50,F_GS,10-Year Long Gilt,Bond
+51,F_LX,FTSE 100 Index,Index
+52,F_SS,3-Month Short Sterling,Interest Rate
+53,F_DL,Milk Class III,Agriculture
+54,F_ZQ,30-Day Fed Funds,Interest Rate
+55,F_VX,Volatilty Index,Index
+56,F_AE,AEX Index,Index
+57,F_BG,Gas Oil,Energy
+58,F_BC,Brent Crude Oil,Energy
+59,F_LU,Rotterdam Coal,Energy
+60,F_DM,MDAX Index,Index
+61,F_AH,Bloomberg Commodity Index,Index
+62,F_CF,10y Swiss Note,Bond
+63,F_DZ,TechDAX,Index
+64,F_FB,DJ Stoxx Bank 600,Index
+65,F_FL,Chicago Ethanol,Energy
+66,F_FM,Stoxx Europe Mid 200,Index
+67,F_FP,OMX Helsinki 25,Index
+68,F_FY,Stoxx Europe 600,Index
+69,F_GX,Euro BUXL,Bond
+70,F_HP,Natural Gas Penultimate,Energy
+71,F_LR,Brazilian Real,Currency
+72,F_LQ,Newcastle Coal,Energy
+73,F_ND,New Zealand Dollar,Currency
+74,F_NY,Nikkei 225,Index
+75,F_PQ,PSI20,Index
+76,F_RR,Russian Ruble,Currency
+77,F_RF,EURO FX/Swiss Franc,Currency
+78,F_RP,EURO FX/British Pound,Currency
+79,F_RY,EURO FX/Japanese Yen,Currency
+80,F_SH,Swiss Mid Cap,Index
+81,F_SX,Swiss Market,Index
+82,F_TR,South African Rand,Currency
+83,F_EB,3-Month EuriBor,Interest Rate
+84,F_GD,Goldman Sachs Commodity Index,Index
+85,F_F,3-Month EuroSwiss,Interest Rate
