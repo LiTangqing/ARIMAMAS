@@ -15,8 +15,8 @@ BT4013 Project - ARIMAMAS
     └── README.md
 
 ### Dependencies
-numpy
-tensorflow 1.7.0 
+- numpy
+- tensorflow 1.7.0 
 ...
 
 ### Read from .pkl files 
