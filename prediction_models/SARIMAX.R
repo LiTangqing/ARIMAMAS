@@ -1,7 +1,9 @@
-setwd("~/GitHub/ARIMAMAS")
+setwd("~/GitHub/ARIMAMAS/prediction_models")
 
 library(reticulate)
 source_python("read_pickle.py")
+
+setwd("~/GitHub/ARIMAMAS/data")
 train_data = read_pickle_file("data_base_train.pkl")
 test_data = read_pickle_file("data_base_test.pkl")
 
@@ -29,8 +31,6 @@ futures = list('F_AD','F_BO','F_BP','F_C','F_CC','F_CD',
            'F_VT','F_VW','F_GD','F_F')
 
 pointer = 1
-
-## Or use Holt-Winters model? 
 
 for (future in futures) {
   
