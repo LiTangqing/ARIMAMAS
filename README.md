@@ -28,6 +28,8 @@
 data = pickle.load(open(DATA_PATH, "rb" ), encoding='latin1') # for python3
 data = pickle.load(open(DATA_PATH, "rb" )) # for python2
 ```
+### Indicators to use
+['USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY']
 
 ### Models
 #### 1. LSTM
