@@ -99,3 +99,13 @@ for (future in futures) {
   
   pointer = pointer + 1
 }
+
+row.names(results) = results$DATE
+results["DATE"] = NULL
+
+temp = results
+temp["DATE"] = row.names(temp)
+head(temp)
+
+setwd("~/GitHub/ARIMAMAS/prediction_models/csv_for_stacking")
+write.csv(results, file = "SARIMA_Predictions.csv")
