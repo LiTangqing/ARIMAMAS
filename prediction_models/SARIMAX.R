@@ -6,83 +6,96 @@ source_python("read_pickle.py")
 setwd("~/GitHub/ARIMAMAS/data")
 train_data = read_pickle_file("data_base_train.pkl")
 test_data = read_pickle_file("data_base_test.pkl")
+stack_data = read_pickle_file("data_stack_test.pkl")
 
 ## indicators to use as xreg
 train_indicators = read_pickle_file("data_indicators_base_train.pkl")
 test_indicators = read_pickle_file("data_indicators_base_test.pkl")
+stack_indicators = read_pickle_file("data_indicators_stack_test.pkl")
+
+train_indicators = na.locf(subset(train_indicators, select=c('USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY')))
+test_indicators = na.locf(subset(test_indicators, select=c('USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY')))
+stack_indicators = na.locf(subset(stack_indicators, select=c('USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY')))
+
+train_indicators = train_indicators[2:(nrow(train_indicators)),]
+test_and_stack_indicators = rbind(test_indicators, stack_indicators)
 
 library(zoo)
 
 # All 88 futures
-futures = list('F_AD','F_BO','F_BP','F_C','F_CC','F_CD',
-           'F_CL','F_CT','F_DX','F_EC','F_ED','F_ES',
-           'F_FC','F_FV','F_GC','F_HG','F_HO','F_JY',
-           'F_KC','F_LB','F_LC','F_LN','F_MD','F_MP',
-           'F_NG','F_NQ','F_NR','F_O','F_OJ','F_PA',
-           'F_PL','F_RB','F_RU','F_S','F_SB','F_SF',
-           'F_SI','F_SM','F_TU','F_TY','F_US','F_W',
-           'F_XX','F_YM','F_AX','F_CA','F_DT','F_UB',
-           'F_UZ','F_GS','F_LX','F_SS','F_DL','F_ZQ',
-           'F_VX','F_AE','F_BG','F_BC','F_LU','F_DM',
-           'F_AH','F_CF','F_DZ','F_FB','F_FL','F_FM',
-           'F_FP','F_FY','F_GX','F_HP','F_LR','F_LQ',
-           'F_ND','F_NY','F_PQ','F_RR','F_RF','F_RP',
-           'F_RY','F_SH','F_SX','F_TR','F_EB','F_VF',
-           'F_VT','F_VW','F_GD','F_F')
+futures = list('F_AD','F_AE','F_AH','F_AX','F_BC','F_BG','F_BO','F_BP',
+               'F_C','F_CA','F_CC','F_CD','F_CF','F_CL','F_CT','F_DL',
+               'F_DM','F_DT','F_DX','F_DZ','F_EB','F_EC','F_ED','F_ES',
+               'F_F','F_FB','F_FC','F_FL','F_FM','F_FP','F_FV','F_FY',
+               'F_GC','F_GD','F_GS','F_GX','F_HG','F_HO','F_HP','F_JY',
+                'F_KC','F_LB','F_LC','F_LN','F_LQ','F_LR','F_LU','F_LX',
+               'F_MD','F_MP','F_ND','F_NG','F_NQ','F_NR','F_NY','F_O',
+               'F_OJ','F_PA','F_PL','F_PQ','F_RB','F_RF','F_RP','F_RR',
+               'F_RU','F_RY','F_S','F_SB','F_SF','F_SH','F_SI','F_SM',
+               'F_SS','F_SX','F_TR','F_TU','F_TY','F_UB','F_US','F_UZ',
+               'F_VF','F_VT','F_VW','F_VX','F_W','F_XX','F_YM','F_ZQ')
+
+# store predictions
+results = setNames(data.frame(matrix(ncol = length(futures), nrow = 782)), futures)
+
+# Add Date column
+
+dates = c(test_dates, stack_dates)
+results["DATE"] = dates
 
 pointer = 1
 
 for (future in futures) {
   
-  pointer = pointer + 1
-}
-
-# get close price and forward fill NaNs
-x_train = na.locf(train_data[,(pointer*4)])
-x_test = na.locf(test_data[,(pointer*4)])
-
-# take log
-x_train = log(x_train)
-x_test = log(x_test)
-
-period = 5 ## 5 trading days in a week
-
-library(forecast)
-#search for sarima models
-min.sse.info = list(p=-1, d=-1, q=-1, P=-1, D=-1, Q=-1, 
-                    sse=.Machine$double.xmax, res.p.value=100, model=NULL)
-S = period
-
-for (d in 1:1) for (D in 1:1) for (P in 0:2) for (Q in 0:2) for (p in 2:5) for (q in 2:5) {
+  # get close price and forward fill NaNs
+  x_train = na.locf(train_data[,(pointer*4)])
+  x_test = na.locf(test_data[,(pointer*4)])
+  stack_test = na.locf(stack_data[,(pointer*4)])
   
-  if (d+D+P+Q+p+q > 10) next
+  # take log
+  x_train = log(x_train)
+  x_test = log(x_test)
+  x_test = c(NaN, x_test)   # first row has no close price
+  stack_test = log(stack_test)
+  stack_test = c(NaN, stack_test)   # first row has no close price
   
-  model = tryCatch({
-    arima(x_train,  order=c(p,d,q), seasonal=list(order=c(P,D,Q), period=S))
-  }, warning = function(w) { message(w) }, 
-  error   = function(e) { message(e); return(NULL) }, 
-  finally = {})
+  x_and_stack_test = c(x_test, stack_test)
   
-  if (!is.null(model)) {
-    fore.x = forecast(model, h=length(x_test))
-    pred.x = as.numeric(fore.x$mean)
-    sse = sum((pred.x-x_test)**2)
-    box.test = Box.test(model$residuals, lag=log(length(model$residuals)))
-
-    if (is.null(min.sse.info$model) || 
-        sse < min.sse.info$sse ||
-        (sse == min.sse.info$sse && 
-         p+d+q+P+D+Q < min.sse.info$p + min.sse.info$d + min.sse.info$q + 
-         min.sse.info$P + min.sse.info$D + min.sse.info$Q)){
-      min.sse.info$sse = sse
-      min.sse.info$p = p
-      min.sse.info$d = d				
-      min.sse.info$q = q
-      min.sse.info$P = P
-      min.sse.info$D = D				
-      min.sse.info$Q = Q								
-      min.sse.info$res.p.value = box.test$p.value			
-      min.sse.info$model = model								
-    }		
+  period = 5 ## 5 trading days in a week
+  S = period
+  
+  library(forecast)
+  
+  allpred = vector()
+  
+  test_dates = rownames(test_data)
+  stack_dates = rownames(stack_data)
+  
+  batch_size = 5
+  iterations = length(x_and_stack_test)/batch_size   
+  
+  # Build SARIMAX model iteratively to perform 1-step ahead forecast (for each trading week)
+  for (i in 1:iterations) {
+    train = c(x_train, x_and_stack_test[1:batch_size*(i-1)])
+    # train model for all data up to simulated prediction day
+    model = auto.arima(train, d = 1, max.p = 5, max.q =5 #, xreg = as.matrix(rbind(train_indicators, test_and_stack_indicators[1:batch_size*(i-1)]))
+                       ,trace=FALSE)
+    
+    test = x_and_stack_test[(batch_size*(i-1) + 1):batch_size*i]
+    pred = forecast(model, h = 5)  #, xreg = as.matrix(test_and_stack_indicators[(batch_size*(i-1) + 1):batch_size*i,]))    ## 1-step ahead forecast
+    pred = as.numeric(pred$mean)
+    allpred = c(allpred, exp(pred))
   }
+  
+  train = c(x_train, x_and_stack_test[1:(length(x_and_stack_test)-2)])
+  model = auto.arima(train, d = 1, max.p = 5, max.q =5 #, xreg = as.matrix(rbind(train_indicators, test_and_stack_indicators[1:batch_size*(i-1)]))
+                     ,trace=FALSE)
+  test = x_and_stack_test[(length(x_and_stack_test)-1):(length(x_and_stack_test))]
+  pred = forecast(model, h = 2)  #, xreg = as.matrix(test_and_stack_indicators[(batch_size*(i-1) + 1):batch_size*i,]))    ## 1-step ahead forecast
+  pred = as.numeric(pred$mean)
+  allpred = c(allpred, exp(pred))
+  
+  results[future] = allpred
+  
+  pointer = pointer + 1
 }
