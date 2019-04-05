@@ -47,7 +47,18 @@ model.add(Activation('linear'))
 model.compile(loss='mse', optimizer='adam')
 hist = model.fit_generator(generator, epochs=80, verbose=2)
 ```
+#### 2. Linear Regression
+Settings: 
+- Using .shift(1) to get 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE' as independent variables
+- data_train_x & data_test_x consists of 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE'
+- data_train_y & data_test_y consists of 'CLOSE'
 
+Model Architecture:
+```python
+lr = LinearRegression()
+model = lr.fit(data_train_x, data_train_y)
+y_pred = lr.predict(data_test_x)
+```
 ### TODO
 - ~~finish individual models & make prediction~~
 - ~~stacking~~
