@@ -1,7 +1,18 @@
 import numpy
+import pandas as pd
+from keras.models import Sequential
+from keras.layers import Activation, Dense, Input, Reshape, Flatten,TimeDistributed
+from keras.layers import LSTM, Dropout
+from keras.layers.convolutional import Conv1D
+from keras.layers.pooling import MaxPooling1D
+from keras.layers import ConvLSTM2D
 
 def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, exposure, equity, settings):
-    ''' This system uses trend following techniques to allocate capital into the desired equities'''
+    ''' This system uses trend following techniques to allocate capital into the desired equities''' 
+    future_names = settings['markets'][1:] # remove cash
+    n_futures = len(future_names)
+    print("n_futures:", n_futures)
+    print("close shape:", CLOSE.shape)
 
     nMarkets=CLOSE.shape[1]
     print('CLOSE SHAPE:', CLOSE.shape)
@@ -47,14 +58,14 @@ def mySettings():
                            'F_FM','F_FP','F_FY','F_GX','F_HP','F_LR',
                            'F_LQ','F_ND','F_NY','F_PQ','F_RR','F_RF',
                            'F_RP','F_RY','F_SH','F_SX','F_TR','F_EB',
-                           'F_VF','F_VT','F_VW','F_GD','F_F']
+                           'F_GD','F_F']
      
     settings['lookback']= 504
     settings['budget']= 10**6
     settings['slippage']= 0.05
 
-    settings['beginInSample'] = ''
-    settings['endInSample'] = ''
+    #settings['beginInSample'] = ''
+    #settings['endInSample'] = ''
 
     return settings
 
