@@ -15,7 +15,7 @@
     │   └── ...      
     ├── weights_allocation          # weights allocation strategies for selected futures  
     │   └── ...    
-    ├── ClosePriceEvaluation.py  
+    ├── arimamas.py                 # define myTradingSystem and mySettings
     └── README.md
 
 ### Dependencies
@@ -36,7 +36,7 @@ Settings:
 Model Architecture:
 ```python
 model = Sequential()
-model.add(LSTM(units=20, input_shape=(lookback, n_features ),
+model.add(LSTM(units=20, input_shape=(lookback, n_features),
                return_sequences=True, dropout=0.5))
 model.add(LSTM(10, dropout=0.5)) 
 model.add(Dense(units=20))
@@ -45,16 +45,25 @@ model.add(Dense(units=dim_out))
 model.add(Activation('linear'))
 
 model.compile(loss='mse', optimizer='adam')
-
-print(model.summary())
-model.fit_generator(generator,epochs=80, verbose=2)
+hist = model.fit_generator(generator, epochs=80, verbose=2)
 ```
+#### 2. Linear Regression
+Settings: 
+- Using .shift(1) to get 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE' as independent variables
+- data_train_x & data_test_x consists of 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE'
+- data_train_y & data_test_y consists of 'CLOSE'
 
+Model Architecture:
+```python
+lr = LinearRegression()
+model = lr.fit(data_train_x, data_train_y)
+y_pred = lr.predict(data_test_x)
+```
 ### TODO
 - ~~finish individual models & make prediction~~
-- stacking
+- ~~stacking~~
 - research & work on weights allocation strategies
+- compile models in myTradingSystem and mySettings
 #### TO ADD TO README:
 - add instructions for reproduce and use each of the model 
-- add information on how indicators are picked 
 - add training & tuning strategy
