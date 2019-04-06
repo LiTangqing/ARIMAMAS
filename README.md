@@ -21,6 +21,8 @@
 ### Dependencies
 - numpy >= 1.15.0
 - tensorflow 1.7.0
+- keras 2.2.4
+
 ...
 
 ### Indicators to use
