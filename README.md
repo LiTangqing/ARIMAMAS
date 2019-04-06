@@ -28,6 +28,14 @@
 ### Indicators to use
 ['USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY']
 
+### Futures with less than 1 MAPE
+[F_AD, F_AE, F_AH, F_AX, F_BO, F_BP, F_C, F_CA, F_CD, F_CF, 
+ F_DL, F_DM, F_DT, F_DX, F_EB, F_EC, F_ED, F_F, F_FC, F_FL, 
+ F_FM, F_FP, F_FV, F_FY, F_GC, F_GD, F_GS, F_GX, F_JY, F_LU, 
+ F_LX, F_MD, F_MP, F_ND, F_PQ, F_RF, F_RP, F_RR, F_RY, F_SF, 
+ F_SS, F_SX, F_TU, F_TY, F_UB, F_US, F_UZ, F_VF, F_VT, F_VW, 
+ F_XX, F_YM, F_ZQ]
+
 ### Models
 #### 1. LSTM
 Settings: 
