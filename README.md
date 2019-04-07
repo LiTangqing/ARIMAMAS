@@ -28,7 +28,7 @@
 ### Indicators to use
 ['USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY']
 
-### Futures with less than 1 MAPE
+### Futures with less than 1 MAPE (trade these)
 [F_AD, F_AE, F_AH, F_AX, F_BO, F_BP, F_C, F_CA, F_CD, F_CF, 
  F_DL, F_DM, F_DT, F_DX, F_EB, F_EC, F_ED, F_F, F_FC, F_FL, 
  F_FM, F_FP, F_FV, F_FY, F_GC, F_GD, F_GS, F_GX, F_JY, F_LU, 
@@ -57,23 +57,25 @@ model.add(Activation('linear'))
 model.compile(loss='mse', optimizer='adam')
 hist = model.fit_generator(generator, epochs=80, verbose=2)
 ```
+
+Reproduce the model: 
+- python ./prediction_models/lstm_for_stacking.py
+
+Generate predictions for stacking:
+- python ./prediction_models/LSTM_predict_for_stack.py
 #### 2. Linear Regression
 Settings: 
 - Using .shift(1) to get 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE' as independent variables
 - data_train_x & data_test_x consists of 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE'
 - data_train_y & data_test_y consists of 'CLOSE'
 
-Model Architecture:
+Model:
 ```python
 lr = LinearRegression()
 model = lr.fit(data_train_x, data_train_y)
 y_pred = lr.predict(data_test_x)
 ```
-### TODO
-- ~~finish individual models & make prediction~~
-- ~~stacking~~
-- research & work on weights allocation strategies
-- compile models in myTradingSystem and mySettings
-#### TO ADD TO README:
-- add instructions for reproduce and use each of the model 
-- add training & tuning strategy
+
+
+
+
