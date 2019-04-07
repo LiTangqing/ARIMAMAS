@@ -13,6 +13,7 @@ train_indicators = read_pickle_file("data_indicators_base_train.pkl")
 test_indicators = read_pickle_file("data_indicators_base_test.pkl")
 stack_indicators = read_pickle_file("data_indicators_stack_test.pkl")
 
+library(zoo)
 train_indicators = na.locf(subset(train_indicators, select=c('USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY')))
 test_indicators = na.locf(subset(test_indicators, select=c('USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY')))
 stack_indicators = na.locf(subset(stack_indicators, select=c('USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY')))
@@ -40,10 +41,16 @@ results = setNames(data.frame(matrix(ncol = length(futures), nrow = 782)), futur
 
 # Add Date column
 
+test_dates = rownames(test_data)
+stack_dates = rownames(stack_data)
 dates = c(test_dates, stack_dates)
 results["DATE"] = dates
 
-pointer = 1
+pointer =1
+
+library(broom)
+
+setwd("~/GitHub/ARIMAMAS/prediction_models/SARIMA_saved_models")
 
 for (future in futures) {
   
@@ -68,9 +75,6 @@ for (future in futures) {
   
   allpred = vector()
   
-  test_dates = rownames(test_data)
-  stack_dates = rownames(stack_data)
-  
   batch_size = 5
   iterations = length(x_and_stack_test)/batch_size   
   
@@ -81,6 +85,10 @@ for (future in futures) {
     model = auto.arima(train, d = 1, max.p = 5, max.q =5 #, xreg = as.matrix(rbind(train_indicators, test_and_stack_indicators[1:batch_size*(i-1)]))
                        ,trace=FALSE)
     
+    # store model params
+    filename = paste(future,i,".txt")
+    write.table(tidy(model), file = filename)
+    
     test = x_and_stack_test[(batch_size*(i-1) + 1):batch_size*i]
     pred = forecast(model, h = 5)  #, xreg = as.matrix(test_and_stack_indicators[(batch_size*(i-1) + 1):batch_size*i,]))    ## 1-step ahead forecast
     pred = as.numeric(pred$mean)
@@ -90,6 +98,11 @@ for (future in futures) {
   train = c(x_train, x_and_stack_test[1:(length(x_and_stack_test)-2)])
   model = auto.arima(train, d = 1, max.p = 5, max.q =5 #, xreg = as.matrix(rbind(train_indicators, test_and_stack_indicators[1:batch_size*(i-1)]))
                      ,trace=FALSE)
+  
+  # store model params
+  filename = paste(future,i+1,".txt")
+  write.table(tidy(model), file = filename)
+  
   test = x_and_stack_test[(length(x_and_stack_test)-1):(length(x_and_stack_test))]
   pred = forecast(model, h = 2)  #, xreg = as.matrix(test_and_stack_indicators[(batch_size*(i-1) + 1):batch_size*i,]))    ## 1-step ahead forecast
   pred = as.numeric(pred$mean)
@@ -109,3 +122,5 @@ head(temp)
 
 setwd("~/GitHub/ARIMAMAS/prediction_models/csv_for_stacking")
 write.csv(results, file = "SARIMA_Predictions.csv")
+
+

@@ -10,7 +10,7 @@ from sklearn.linear_model import LinearRegression
 MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
 LOOKBACK_LSTM = 30
 LR_COE = "./prediction_models/LR_Model_Coefficients.csv"
-
+LGBM_MODEL = "./prediction_models/LGBM_saved_models/"
 
 def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
                     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
@@ -63,6 +63,23 @@ def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_
 
 def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
     coe_data = pd.read_csv(LR_COE)
+
+    predictions = []
+    for i, TICKER in enumerate(ticker_lists):
+        # data for current ticker 
+        data = np.array([OPEN[-1,i+1],HIGH[-1,i+1], LOW[-1,i+1], CLOSE[-1,i+1]]).reshape((-1))
+        # get lr coefficient for current ticker
+        coes = coe_data.loc[coe_data['Future']=="F_AD"].values.reshape((-1))[:5]
+        # prediction = X*beta + intercept
+        curr_pred = np.dot(coes[:4], data) + coes[4]
+
+        predictions.append(curr_pred)
+    return predictions
+
+def predict_lgbm(OPEN, HIGH, LOW, CLOSE, ticker_lists):
+    coe_data = pd.read_csv(LR_COE)
+    bst = lgb.Booster(model_file='F_AD.txt') 
+    bst.predict(x_test)
 
     predictions = []
     for i, TICKER in enumerate(ticker_lists):

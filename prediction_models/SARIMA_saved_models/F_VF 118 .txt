@@ -1,0 +1,2 @@
+"term" "estimate" "std.error"
+"1" "drift" 4.90128815764321e-05 3.54461837257e-05
