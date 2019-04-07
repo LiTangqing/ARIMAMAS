@@ -26,7 +26,8 @@
 ...
 
 ### Indicators to use
-['USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY']
+For linear models (6): ['USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY']
+For nonlinear models (44): [...]
 
 ### Futures with less than 1 MAPE (trade these)
 [F_AD, F_AE, F_AH, F_AX, F_BO, F_BP, F_C, F_CA, F_CD, F_CF, 
@@ -77,3 +78,18 @@ lr = LinearRegression()
 model = lr.fit(data_train_x, data_train_y)
 y_pred = lr.predict(data_test_x)
 ```
+#### 3. Random Forest
+Settings:
+- LOOKBACK = 40
+- Each time make 1-step prediction
+- Include 44 indicators + lagged prices + moving average prices as predictors
+- Final models are retrained on 2010-2018 data
+
+Model Hyperparameters:
+- max_depth: 8 - 20
+- max_features: 0.5 - 0.9
+- min_samples_leaf: 2 - 6
+- n_estimators: 80 - 200
+
+Training and generate predictions for stacking:
+- python ./prediction_models/rf_for_stacking.py
