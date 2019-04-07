@@ -68,6 +68,8 @@ Settings:
 - Using .shift(1) to get 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE' as independent variables
 - data_train_x & data_test_x consists of 'LAG_OPEN', 'LAG_HIGH', 'LAG_LOW', 'LAG_CLOSE'
 - data_train_y & data_test_y consists of 'CLOSE'
+- Refer to prediction_models/LR_Model_Coefficients.ipynb for the generated coefficients for each model
+- Refer to prediction_models/csv_for_stacking/LR_Model_Predictions_(2016-2018).ipynb for the generated predictions for stacking
 
 Model:
 ```python
@@ -75,7 +77,3 @@ lr = LinearRegression()
 model = lr.fit(data_train_x, data_train_y)
 y_pred = lr.predict(data_test_x)
 ```
-
-
-
-
