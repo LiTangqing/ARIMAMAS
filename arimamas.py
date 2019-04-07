@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 import pandas as pd
 
 from keras.preprocessing.sequence import TimeseriesGenerator
@@ -70,7 +70,7 @@ def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
         # data for current ticker 
         data = np.array([OPEN[-1,i+1],HIGH[-1,i+1], LOW[-1,i+1], CLOSE[-1,i+1]]).reshape((-1))
         # get lr coefficient for current ticker
-        coes = coe_data.loc[coe_data['Future']=="F_AD"].values.reshape((-1))[:5]
+        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:5]
         # prediction = X*beta + intercept
         curr_pred = np.dot(coes[:4], data) + coes[4]
 
@@ -87,22 +87,22 @@ def predict_lgbm(OPEN, HIGH, LOW, CLOSE, ticker_lists):
         # data for current ticker 
         data = np.array([OPEN[-1,i+1],HIGH[-1,i+1], LOW[-1,i+1], CLOSE[-1,i+1]]).reshape((-1))
         # get lr coefficient for current ticker
-        coes = coe_data.loc[coe_data['Future']=="F_AD"].values.reshape((-1))[:5]
+        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:5]
         # prediction = X*beta + intercept
         curr_pred = np.dot(coes[:4], data) + coes[4]
 
         predictions.append(curr_pred)
     return predictions
 
-def predict_stacked(LGBM, LSTM, LR, RF, SARIMA, ticker_lists):
+def predict_stacked(LGBM, LSTM, RF, LR, SARIMA, ticker_lists):
     coe_data = pd.read_csv(STACKED_MODEL)
 
     predictions = []
     for i, TICKER in enumerate(ticker_lists):
         # data for current ticker 
-        data = np.array([LGBM[-1,i],LSTM[-1,i], LR[-1,i], RF[-1,i], SARIMA[-1,i]]).reshape((-1))
+        data = np.array([LGBM[-1,i],LSTM[-1,i], RF[-1,i], LR[-1,i], SARIMA[-1,i]]).reshape((-1))
         # get base model coefficients for current ticker
-        coes = coe_data.loc[coe_data['Future']=="F_AD"].values.reshape((-1))[:5]
+        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:5]
         # prediction = X*beta + intercept
         curr_pred = np.dot(coes[:4], data) + coes[4]
 
@@ -138,7 +138,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
                                    future_names)
 
     # predict using stacked model
-    stacked_prediction = predict_stacked(lgbm_prediction, lstm_prediction, lr_prediction, rf_prediction, sarima_prediction, future_names)
+    stacked_prediction = predict_stacked(lgbm_prediction, lstm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
     
     return #weights, settings
 
