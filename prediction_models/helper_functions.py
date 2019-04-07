@@ -1,7 +1,8 @@
 # IMPORTS
 import numpy as np
+import pandas as pd
 
-__version__ = '1.0'
+__version__ = '2.0'
 
 def generate_features(df, p=0, d=0, P=0, D=0, s=0, ma=[5, 40]):
     """Given a pandas DataFrame, generate moving-average, price-action and lagged features.
@@ -45,6 +46,17 @@ def generate_features(df, p=0, d=0, P=0, D=0, s=0, ma=[5, 40]):
         train['sLAG_'+str(s*i)] = train['CLOSE'].shift(s*i)
         
     return train
+
+def preprocess_pipeline(data, indicators):
+    """For each ticker data, concat with indicators and spit out X, y."""
+    train = data.copy()
+    train.loc[:, 'TARGET'] = train['CLOSE'].shift(-1) # use today predict tmr
+    train = generate_features(train, 
+                              p=4, d=1, P=2, D=0, s=5, ma=[5,40])
+    train = pd.concat([train.reset_index(drop=True),
+                       indicators.reset_index(drop=True)],
+                      axis=1).dropna()
+    return train.drop(columns=['TARGET']), train['TARGET']
 
 def rmse_ratio(y_true, y_preds):
     """Computes sqrt of mean of squared error / y_true."""

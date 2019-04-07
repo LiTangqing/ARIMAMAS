@@ -6,12 +6,17 @@ from keras.models import load_model
 
 from sklearn.linear_model import LinearRegression
 
+from sklearn.externals.joblib import load
+from helper_functions import generate_features
+from portfolio_optimizer import slippage_costs
+
 # constants
 MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
 LOOKBACK_LSTM = 30
 LR_COE = "./prediction_models/LR_Model_Coefficients.csv"
 LGBM_MODEL = "./prediction_models/LGBM_saved_models/"
 STACKED_MODEL = "./prediction_models/Stacked_Model_Coefficients.csv"
+RF_SAVED_DEST + "./prediction_models/RF_saved_models/"
 
 def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
                     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
@@ -94,6 +99,51 @@ def predict_lgbm(OPEN, HIGH, LOW, CLOSE, ticker_lists):
         predictions.append(curr_pred)
     return predictions
 
+def predict_rf(OPEN, HIGH, LOW, CLOSE,
+               USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
+               USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
+               USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL,
+               USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI,
+               USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, USA_NFIB, USA_NFP, USA_NLTTF,
+               USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, USA_RSM, USA_RSY,
+               USA_TVS, USA_UNR, USA_WINV, ticker_lists):
+    '''
+    Uses prices and indicators information to predict with Random Forest.
+    
+    Engineers features for prediction using helper_functions script.
+    '''
+    indicators = pd.DataFrame(
+            np.hstack((USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF,
+                       USA_CFNAI, USA_CINF, USA_CP, USA_CPI, USA_CPIC,
+                       USA_CPICM, USA_CU, USA_DUR, USA_DURET, USA_EXPX,
+                       USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL, USA_GPAY, 
+                       USA_HI, USA_IMPX, USA_IMVOL, USA_IP, USA_IPMOM,
+                       USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
+                       USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, 
+                       USA_PPIC, USA_RFMI, USA_RSEA, USA_RSM, USA_RSY,
+                       USA_TVS, USA_UNR, USA_WINV))[-40:,:]
+    )
+    predicted = []
+    for i, TICKER in enumerate(ticker_lists):
+        print("RF: working on "+TICKER+"...")
+        # load model from pickle
+        model = load(RF_SAVED_DEST + 'RF_' + TICKER + '.joblib')
+            
+        # preprocess the data - concat and engineer features
+        data = pd.DataFrame({'OPEN':OPEN[-40:,i+1],
+                             'HIGH':HIGH[-40:,i+1],
+                             'LOW':LOW[-40:,i+1],
+                             'CLOSE':CLOSE[-40:,i+1]})
+        data = generate_features(data, p=4, d=1, P=2, D=0, s=5, ma=[5,40])
+        data = pd.concat([data, indicators],
+                          axis=1).dropna()
+        
+        # predict and save results
+        y_pred = model.predict(data.tail(1).values)
+        predicted.append(y_pred)
+    print("RF：done!")
+    return np.vstack(predicted).reshape((-1))
+
 def predict_stacked(LGBM, LSTM, LR, RF, SARIMA, ticker_lists):
     coe_data = pd.read_csv(STACKED_MODEL)
 
@@ -108,6 +158,17 @@ def predict_stacked(LGBM, LSTM, LR, RF, SARIMA, ticker_lists):
 
         predictions.append(curr_pred)
     return predictions
+
+def stacked_momentum(DATE, OPEN, HIGH, LOW, CLOSE, preds, settings):
+    slip = slippage_costs(HIGH[-1,1:],
+                          LOW[-1,1:],
+                          CLOSE[-2,1:],
+                          np.ones((len(settings['markets'])-1,)))
+
+    pos = (preds - CLOSE[-1,1:])/CLOSE[-1,1:]
+    pos = np.where((pos-slip < 0.01) & (pos+slip > -0.01), 0, pos) / np.nansum(abs(pos))
+    pos = np.insert(pos, 0, 0) # give 0 weight to cash LOL
+    return pos
 
 def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
                     USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,

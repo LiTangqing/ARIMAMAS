@@ -34,55 +34,62 @@ def new_portfolio_equity(portfolio_returns, weights, old_portfolio_equity):
     
     Assumption: weights[0] is weight of CASH asset.
     """
-    future_equity = max(np.sum(portfolio_returns) * old_portfolio_equity * (1 - weights[0]), 0)
-    return pd.Series(future_equity + weights[0] * old_portfolio_equity)
+    profit_value = np.sum(portfolio_returns) * old_portfolio_equity * (1 - weights[0])
+    return pd.Series(max(profit_value + old_portfolio_equity, 0.01))
+
+def calc_portfolio_returns(new_prices, old_prices, weights):
+    """Compute weighted arithmetic return of each asset in new_prices."""
+    ret = (new_prices - old_prices)/old_prices
+    return weights * ret
 
 def single_sim_sharpe(portfolio, new_weights, old_weights, portfolio_val, pred_prices, index):
+    """copy from the above, except return the sharpe instead of the difference"""
     """Computes the estimated sharpe ratio for tomorrow given weights and predictions."""
     data = portfolio
      
-    # index of days for convenience of accessing data's values 
+    # index of today for convenience of accessing data's values 
     TMR, TODAY, YTD = index+1, index, index-1
     
-    # today's sharpe ratio (compute using past 5 days returns/std dev)
-    # array of each stock's pct return today
-    today_ret = (data.loc[TODAY, 'CLOSE'] - data.loc[YTD, 'CLOSE']) / data.loc[YTD, 'CLOSE']
-    # array of weighted stock pct returns
-    today_portfolio_ret = old_weights[1:] * today_ret # Drop CASH (first weight)
-    # add today's new portfolio value to Series of portfolio values
-    today_portfolio_val = portfolio_val.append(
-        new_portfolio_equity(portfolio_returns=today_portfolio_ret,
-                             weights=old_weights,
-                             old_portfolio_equity=portfolio_val.iloc[-1]),
-        ignore_index=True
-    )
-    # sharpe of pct returns over past 5 days (inc. today)
-    today_sharpe = sharpe_ratio(today_portfolio_val.pct_change().tail(5))
+#     # today's sharpe ratio (compute using past 5 days returns/std dev)
+#     # array of weighted stock pct returns
+#     today_portfolio_ret = calc_portfolio_returns(data.loc[TODAY, 'CLOSE'],
+#                                                  data.loc[YTD, 'CLOSE'],
+#                                                  old_weights[1:]) # Drop CASH (first weight)
+#     # add today's new portfolio value to Series of portfolio values
+#     today_portfolio_val = portfolio_val.append(
+#         new_portfolio_equity(portfolio_returns=today_portfolio_ret,
+#                              weights=old_weights,
+#                              old_portfolio_equity=portfolio_val.iloc[-1]),
+#         ignore_index=True
+#     )
+#     # sharpe of pct returns over past 5 days (inc. today)
+#     today_sharpe = sharpe_ratio(today_portfolio_val.pct_change().tail(5))
     
     delta_weights = new_weights[1:] - old_weights[1:] # Cash has no slippage
     # Use today's high-low to estimate slippage tomorrow
-    slippage = slippage_costs(data.loc[TODAY, 'HIGH'], 
-                              data.loc[TODAY, 'LOW'],
-                              data.loc[YTD, 'CLOSE'],
+    slippage = slippage_costs(data['HIGH'][TODAY],#.loc[TODAY, 'HIGH'], 
+                              data['LOW'][TODAY],#.loc[TODAY, 'LOW'],
+                              data['CLOSE'][YTD],#.loc[YTD, 'CLOSE'],
                               delta_weights)
     
     # find tomorrow's returns based on new weights and predicted prices
-    # ASSUMPTION: tomorrow's OPEN = today's CLOSE
-    # array of each stock's predicted pct return tomorrow
-    pred_ret = (pred_prices.loc[TMR, :] - data.loc[TODAY, 'CLOSE']) / data.loc[TODAY, 'CLOSE'] # % change
+    # CRITICAL ASSUMPTION: tomorrow's OPEN = today's CLOSE
     # array of predicted weighted stock pct returns, deducting slippage for each stock
-    pred_portfolio_ret = new_weights[1:] * pred_ret - slippage
+    pred_portfolio_ret = calc_portfolio_returns(pred_prices,#.loc[TMR, :],
+                                                data['CLOSE'][TODAY],#.loc[TODAY, 'CLOSE'],
+                                                new_weights[1:])
+    pred_portfolio_ret -= slippage
     # sharpe of past 4 days (inc. today) + tomorrows predicted portfolio return
-    pred_portfolio_val = today_portfolio_val.append(
+    pred_portfolio_val = portfolio_val.append(
         new_portfolio_equity(portfolio_returns=pred_portfolio_ret,
                              weights=new_weights,
-                             old_portfolio_equity=today_portfolio_val.iloc[-1]),
+                             old_portfolio_equity=portfolio_val.iloc[-1]),
         ignore_index=True
     )
     pred_sharpe = sharpe_ratio(pred_portfolio_val.pct_change().tail(5))
     
     # maximize the difference here to greedily optimize
-    return pred_sharpe  
+    return pred_sharpe.iloc[-1] if pred_sharpe.shape[0] > 1 else pred_sharpe
 
 def neg_obj_function(new_weights, data, old_weights, portfolio_val, pred_prices, index):
     return -single_sim_sharpe(data, new_weights, old_weights,
