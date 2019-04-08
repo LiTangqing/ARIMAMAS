@@ -72,7 +72,7 @@ def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_
         y_pred = model.predict_generator(to_pred_generator)
         y_pred = y_pred * sd_y + mu_y
         predicted.append(y_pred)
-    print("LSTM done!")
+    print("LSTM: done!")
     return np.vstack(predicted).reshape((-1))
 
 def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
