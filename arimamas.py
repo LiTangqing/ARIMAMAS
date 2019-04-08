@@ -10,7 +10,7 @@ from keras.preprocessing.sequence import TimeseriesGenerator
 from keras.models import load_model
 
 from sklearn.linear_model import LinearRegression
-
+import lightgbm as lgb
 from sklearn.externals.joblib import load
 from helper_functions import generate_features
 from portfolio_optimizer import slippage_costs
@@ -225,6 +225,8 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     future_names = settings['markets'][1:] # remove cash
     n_futures = len(future_names)
     print("n_futures:", n_futures)
+    # predict using lgbm
+    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, future_names)
 
     # predict using lr
     lr_prediction = predict_lr(OPEN, HIGH, LOW, CLOSE, future_names)
@@ -261,7 +263,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     stacked_prediction = predict_stacked(lgbm_prediction, lstm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
     
     # optimize weight allocation strategy
-    weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, np.array(lgbm_prediction), settings)
+    weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, stacked_prediction, settings)
     
     return weights, settings
 
