@@ -17,6 +17,8 @@ from portfolio_optimizer import slippage_costs
 
 import statsmodels.tsa.api as sm
 
+import lightgbm as lgb
+
 # constants
 MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
 LOOKBACK_LSTM = 30
@@ -95,12 +97,16 @@ def predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_C
     predictions = []
     for i, TICKER in enumerate(ticker_lists):
         filename = LGBM_MODEL + TICKER + '.txt'
-        bst = lgb.Booster(model_file=filename) 
-        curr_pred = bst.predict([OPEN[-1,i+1], HIGH[-1,i+1], LOW[-1,i+1], CLOSE[-1,i+1],
-											USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY]).reshape((-1))
+        with open(filename, 'r') as f:
+            model_str = f.read()
+        bst = lgb.Booster({'model_str':model_str})
+        dat = np.array([OPEN[-1,i+1], HIGH[-1,i+1], LOW[-1,i+1], CLOSE[-1,i+1],
+                        USA_BC[-1,:], USA_BOT[-1,:], USA_CCR[-1,:],
+                        USA_CF[-1,:], USA_CPICM[-1,:], USA_GPAY[-1,:]]).reshape((1,10))
+        curr_pred = bst.predict(dat)[0]
 
         predictions.append(curr_pred)
-    return predictions
+    return np.vstack(predictions).reshape((-1))
 
 def predict_rf(OPEN, HIGH, LOW, CLOSE,
                USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
@@ -185,14 +191,14 @@ def predict_stacked(LGBM, LSTM, LR, RF, SARIMA, ticker_lists):
     predictions = []
     for i, TICKER in enumerate(ticker_lists):
         # data for current ticker 
-        data = np.array([LGBM[-1,i],LSTM[-1,i], RF[-1,i], LR[-1,i], SARIMA[-1,i]]).reshape((-1))
+        data = np.array([LGBM[i], LSTM[i], RF[i], LR[i], SARIMA[i]])#.reshape((-1))
         # get base model coefficients for current ticker
-        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:5]
+        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:6]
         # prediction = X*beta + intercept
-        curr_pred = np.dot(coes[:4], data) + coes[4]
+        curr_pred = np.dot(coes[:5], data) + coes[5]
 
         predictions.append(curr_pred)
-    return predictions
+    return np.vstack(predictions).reshape((-1))
 
 def stacked_momentum(OPEN, HIGH, LOW, CLOSE, preds, settings):
     slip = slippage_costs(HIGH[-1,1:],
@@ -249,13 +255,13 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     sarima_prediction = predict_sarima(CLOSE, future_names)
 
     # predict using lgbm
-    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, ticker_lists)
+    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, future_names)
 
     # predict using stacked model
     stacked_prediction = predict_stacked(lgbm_prediction, lstm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
     
     # optimize weight allocation strategy
-    weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, np.array(stacked_prediction), settings)
+    weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, np.array(lgbm_prediction), settings)
     
     return weights, settings
 
@@ -292,8 +298,8 @@ def mySettings():
     settings['budget']= 10**6
     settings['slippage']= 0.05
 
-    settings['beginInSample'] = '20180101'
-    settings['endInSample'] = '20190331'
+    settings['beginInSample'] = '20180801'
+    settings['endInSample'] = '20190131'
 
     return settings
 
