@@ -1,4 +1,9 @@
-﻿import numpy as np
+#!/usr/bin/env python
+# coding: utf-8
+
+from __future__ import print_function, division # for python 2
+
+import numpy as np
 import pandas as pd
 
 from keras.preprocessing.sequence import TimeseriesGenerator
@@ -10,13 +15,16 @@ from sklearn.externals.joblib import load
 from helper_functions import generate_features
 from portfolio_optimizer import slippage_costs
 
+import statsmodels.tsa.api as sm
+
 # constants
 MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
 LOOKBACK_LSTM = 30
 LR_COE = "./prediction_models/LR_Model_Coefficients.csv"
 LGBM_MODEL = "./prediction_models/LGBM_saved_models/"
 STACKED_MODEL = "./prediction_models/Stacked_Model_Coefficients.csv"
-RF_SAVED_DEST + "./prediction_models/RF_saved_models/"
+RF_SAVED_DEST = "./prediction_models/RF_saved_models/"
+SARIMA_SAVED_DEST = "./prediction_models/SARIMA_params.csv"
 
 def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
                     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
@@ -33,7 +41,7 @@ def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_
     print("===========================")
     print("LSTM is predicting...\nLSTM foresees a lot of work.\nLSTM works hard.")
     print("LSTM is slow but smart.\nBe like LSTM.")
-    print(u'\U0001F37A')
+    #print(u'\U0001F37A')
     predicted = []
     for i, TICKER in enumerate(ticker_lists):
         print("LSTM: working on "+TICKER+"...")
@@ -126,7 +134,7 @@ def predict_rf(OPEN, HIGH, LOW, CLOSE,
     predicted = []
     for i, TICKER in enumerate(ticker_lists):
         print("RF: working on "+TICKER+"...")
-        # load model from pickle
+        # load model from joblib
         model = load(RF_SAVED_DEST + 'RF_' + TICKER + '.joblib')
             
         # preprocess the data - concat and engineer features
@@ -145,27 +153,34 @@ def predict_rf(OPEN, HIGH, LOW, CLOSE,
     return np.vstack(predicted).reshape((-1))
 
 def predict_sarima(CLOSE, ticker_lists):
+    """Make 1-step forecast of CLOSE prices in tickers.
+    
+    Uses a csv of saved order & seasonal order for model specification."""
     predicted = []
-    with open('SARIMA_saved_params.pkl', 'rb') as f:
-        params = pickle.load(f)
-    print("SARIMAMA getting to work!")
+    # Load grid-searched params from csv
+    params = pd.read_csv(SARIMA_SAVED_DEST, index_col=0)
+    
+    print("Super ARIMAMA getting to work done!")
     for i, TICKER in enumerate(ticker_lists):
         print("SARIMA: working on "+TICKER+"...")
         
-        order = params[TICKER]['order']
-        seasonal_order = params[TICKER]['seasonal']
+        # convert str params to tuple
+        order = eval(params.loc[TICKER, 'order']) 
+        seasonal_order = eval(params.loc[TICKER,'seasonal'])
         
-        # load model from pickle
+        # fit model based on params
         model = sm.SARIMAX(CLOSE[-120:, i+1],
                            order=order,
                            seasonal_order=seasonal_order,
                            trend='c', 
                            enforce_stationarity=False, # bypass any errors
-                           enforce_invertibility=False) #load('SARIMA_' + TICKER + '.pkl')
-            
+                           enforce_invertibility=False)\
+                    .fit(disp=False)
+        
         # predict and save results
         y_pred = model.forecast(1)
         predicted.append(y_pred)
+        
     print("SARIMA：done!")
     return np.vstack(predicted).reshape((-1))
 
