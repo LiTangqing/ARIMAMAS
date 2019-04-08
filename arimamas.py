@@ -249,7 +249,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     sarima_prediction = predict_sarima(CLOSE, future_names)
 
     # predict using lgbm
-    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, ticker_lists)
+    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, future_names)
 
     # predict using stacked model
     stacked_prediction = predict_stacked(lgbm_prediction, lstm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
