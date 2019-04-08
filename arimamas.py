@@ -72,7 +72,7 @@ def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_
         y_pred = model.predict_generator(to_pred_generator)
         y_pred = y_pred * sd_y + mu_y
         predicted.append(y_pred)
-    print("LSTM：done!")
+    print("LSTM done!")
     return np.vstack(predicted).reshape((-1))
 
 def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
@@ -90,19 +90,14 @@ def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
         predictions.append(curr_pred)
     return predictions
 
-def predict_lgbm(OPEN, HIGH, LOW, CLOSE, ticker_lists):
-    coe_data = pd.read_csv(LR_COE)
-    bst = lgb.Booster(model_file='F_AD.txt') 
-    bst.predict(x_test)
-
+def predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, ticker_lists):
+	
     predictions = []
     for i, TICKER in enumerate(ticker_lists):
-        # data for current ticker 
-        data = np.array([OPEN[-1,i+1],HIGH[-1,i+1], LOW[-1,i+1], CLOSE[-1,i+1]]).reshape((-1))
-        # get lr coefficient for current ticker
-        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:5]
-        # prediction = X*beta + intercept
-        curr_pred = np.dot(coes[:4], data) + coes[4]
+        filename = LGBM_MODEL + TICKER + '.txt'
+        bst = lgb.Booster(model_file=filename) 
+        curr_pred = bst.predict([OPEN[-1,i+1], HIGH[-1,i+1], LOW[-1,i+1], CLOSE[-1,i+1],
+											USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY]).reshape((-1))
 
         predictions.append(curr_pred)
     return predictions
@@ -149,7 +144,7 @@ def predict_rf(OPEN, HIGH, LOW, CLOSE,
         # predict and save results
         y_pred = model.predict(data.tail(1).values)
         predicted.append(y_pred)
-    print("RF：done!")
+    print("RF done!")
     return np.vstack(predicted).reshape((-1))
 
 def predict_sarima(CLOSE, ticker_lists):
@@ -181,7 +176,7 @@ def predict_sarima(CLOSE, ticker_lists):
         y_pred = model.forecast(1)
         predicted.append(y_pred)
         
-    print("SARIMA：done!")
+    print("SARIMA done!")
     return np.vstack(predicted).reshape((-1))
 
 def predict_stacked(LGBM, LSTM, LR, RF, SARIMA, ticker_lists):
@@ -252,6 +247,9 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     
     # predict using sarima
     sarima_prediction = predict_sarima(CLOSE, future_names)
+
+    # predict using lgbm
+    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, ticker_lists)
 
     # predict using stacked model
     stacked_prediction = predict_stacked(lgbm_prediction, lstm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
