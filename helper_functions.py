@@ -1,3 +1,5 @@
+"""Library of helper functions to be imported for use with some models."""
+
 # IMPORTS
 import numpy as np
 import pandas as pd

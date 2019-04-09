@@ -1,6 +1,11 @@
+"""Helper functions for optimizing trading strategy."""
+
+# Imports
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
+
+__version__ = '1.0'
 
 def sharpe_ratio(daily_returns):
     # get volatility
