@@ -300,8 +300,8 @@ def mySettings():
     settings['budget']= 10**6
     settings['slippage']= 0.05
 
-    settings['beginInSample'] = '20180801'
-    settings['endInSample'] = '20190131'
+    settings['beginInSample'] = '20180701'
+    settings['endInSample'] = '20190331'
 
     return settings
 
