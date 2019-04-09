@@ -22,8 +22,13 @@
 - numpy >= 1.15.0
 - tensorflow 1.7.0
 - keras 2.2.4
+- lgbm
 
 ...
+
+### Instructions 
+Simply run arimamas.py
+
 
 ### Indicators to use
 For linear models (6): ['USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY']
