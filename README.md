@@ -31,7 +31,9 @@ Simply run arimamas.py
 
 
 ### Indicators to use
-For linear models (6): ['USA_BC', 'USA_BOT', 'USA_CCR', 'USA_CF', 'USA_CPICM', 'USA_GPAY']
+For linear models (6): 
+    [USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY]
+
 For nonlinear models (44): 
     [USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
@@ -105,3 +107,14 @@ Model Hyperparameters:
 
 Training and generate predictions for stacking:
 - python ./prediction_models/rf_for_stacking.py
+
+#### 4. SARIMA
+Settings:
+- Lookback = 120
+- Uses CLOSE prices only
+- Refit a model to past 120 days data with grid-searched order/seasonal-order and make 1-step forecast
+- Stationarity and Invertibility not enforced in model to prevent raising errors
+
+Model parameters:
+- order = (0-2, 1, 1-2)
+- seasonal-order = (0-1, 0-1, 1, 20)
