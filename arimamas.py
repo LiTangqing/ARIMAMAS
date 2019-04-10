@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from __future__ import print_function, division # for python 2
+#from __future__ import print_function, division # for python 2
 
 import numpy as np
 import pandas as pd
 
-from keras.preprocessing.sequence import TimeseriesGenerator
-from keras.models import load_model
+#from keras.preprocessing.sequence import TimeseriesGenerator
+#from keras.models import load_model
 
 from sklearn.linear_model import LinearRegression
-import lightgbm as lgb
 from sklearn.externals.joblib import load
 from helper_functions import generate_features
 from portfolio_optimizer import slippage_costs
@@ -20,62 +19,62 @@ import statsmodels.tsa.api as sm
 import lightgbm as lgb
 
 # constants
-MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
+#MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
 LOOKBACK_LSTM = 30
 LR_COE = "./prediction_models/LR_Model_Coefficients.csv"
 LGBM_MODEL = "./prediction_models/LGBM_saved_models/"
-STACKED_MODEL = "./prediction_models/Stacked_Model_Coefficients.csv"
+STACKED_MODEL = "./prediction_models/Stacked_Model_Coefficients(WITHOUT LSTM).csv"
 RF_SAVED_DEST = "./prediction_models/RF_saved_models/"
 SARIMA_SAVED_DEST = "./prediction_models/SARIMA_params.csv"
 
-def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
-                    USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
-                    USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL,
-                    USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI,
-                    USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, USA_NFIB, USA_NFP, USA_NLTTF,
-                    USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, USA_RSM, USA_RSY,
-                    USA_TVS, USA_UNR, USA_WINV, ticker_lists):
-    '''predict future close price using pretrained lstm model
-       return: np array of predicted close price of shape (n_futures,) 
-               the order is the same as settings['markets']
-    '''
+# def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
+#                     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
+#                     USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL,
+#                     USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI,
+#                     USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, USA_NFIB, USA_NFP, USA_NLTTF,
+#                     USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, USA_RSM, USA_RSY,
+#                     USA_TVS, USA_UNR, USA_WINV, ticker_lists):
+#     '''predict future close price using pretrained lstm model
+#        return: np array of predicted close price of shape (n_futures,) 
+#                the order is the same as settings['markets']
+#     '''
 
-    print("===========================")
-    print("LSTM is predicting...\nLSTM foresees a lot of work.\nLSTM works hard.")
-    print("LSTM is slow but smart.\nBe like LSTM.")
-    #print(u'\U0001F37A')
-    predicted = []
-    for i, TICKER in enumerate(ticker_lists):
-        print("LSTM: working on "+TICKER+"...")
-        # load model and scaling parameter
-        model = load_model(MODEL_SAVED_DEST + TICKER+ '.h5')
-        scale_params = np.load(MODEL_SAVED_DEST+ TICKER + '_scale_params.npz')
-        mu_y = scale_params['average_y']
-        sd_y = scale_params['std_dev_y']
-        mu_X = scale_params['average_X']
-        sd_X = scale_params['std_dev_X']
+#     print("===========================")
+#     print("LSTM is predicting...\nLSTM foresees a lot of work.\nLSTM works hard.")
+#     print("LSTM is slow but smart.\nBe like LSTM.")
+#     #print(u'\U0001F37A')
+#     predicted = []
+#     for i, TICKER in enumerate(ticker_lists):
+#         print("LSTM: working on "+TICKER+"...")
+#         # load model and scaling parameter
+#         model = load_model(MODEL_SAVED_DEST + TICKER+ '.h5')
+#         scale_params = np.load(MODEL_SAVED_DEST+ TICKER + '_scale_params.npz')
+#         mu_y = scale_params['average_y']
+#         sd_y = scale_params['std_dev_y']
+#         mu_X = scale_params['average_X']
+#         sd_X = scale_params['std_dev_X']
         
-        # preprocess the data - concate, scale
-        X = np.hstack((OPEN[:,i+1].reshape(-1,1), HIGH[:,i+1].reshape(-1,1), LOW[:,i+1].reshape(-1,1), CLOSE[:,i+1].reshape(-1,1),
-                    USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI, 
-                    USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR, USA_DURET,
-                    USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL, USA_GPAY, USA_HI, USA_IMPX,
-                    USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
-                    USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, 
-                    USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV))
+#         # preprocess the data - concate, scale
+#         X = np.hstack((OPEN[:,i+1].reshape(-1,1), HIGH[:,i+1].reshape(-1,1), LOW[:,i+1].reshape(-1,1), CLOSE[:,i+1].reshape(-1,1),
+#                     USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI, 
+#                     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR, USA_DURET,
+#                     USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL, USA_GPAY, USA_HI, USA_IMPX,
+#                     USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
+#                     USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, 
+#                     USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV))
 
-        X = (X - mu_X) / sd_X
-        y_true = CLOSE[:,i+1] # dummy y - just to fill in 
+#         X = (X - mu_X) / sd_X
+#         y_true = CLOSE[:,i+1] # dummy y - just to fill in 
 
-        to_pred_generator = TimeseriesGenerator(X, y_true,
-                                    length=30, 
-                                    batch_size=1) 
+#         to_pred_generator = TimeseriesGenerator(X, y_true,
+#                                     length=30, 
+#                                     batch_size=1) 
 
-        y_pred = model.predict_generator(to_pred_generator)
-        y_pred = y_pred * sd_y + mu_y
-        predicted.append(y_pred)
-    print("LSTM: done!")
-    return np.vstack(predicted).reshape((-1))
+#         y_pred = model.predict_generator(to_pred_generator)
+#         y_pred = y_pred * sd_y + mu_y
+#         predicted.append(y_pred)
+#     print("LSTM: done!")
+#     return np.vstack(predicted).reshape((-1))
 
 def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
     coe_data = pd.read_csv(LR_COE)
@@ -185,17 +184,17 @@ def predict_sarima(CLOSE, ticker_lists):
     print("SARIMA done!")
     return np.vstack(predicted).reshape((-1))
 
-def predict_stacked(LGBM, LSTM, LR, RF, SARIMA, ticker_lists):
+def predict_stacked(LGBM, RF, LR, SARIMA, ticker_lists):
     coe_data = pd.read_csv(STACKED_MODEL)
 
     predictions = []
     for i, TICKER in enumerate(ticker_lists):
         # data for current ticker 
-        data = np.array([LGBM[i], LSTM[i], RF[i], LR[i], SARIMA[i]])#.reshape((-1))
+        data = np.array([LGBM[i], RF[i], LR[i], SARIMA[i]])#.reshape((-1))
         # get base model coefficients for current ticker
-        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:6]
+        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:5]
         # prediction = X*beta + intercept
-        curr_pred = np.dot(coes[:5], data) + coes[5]
+        curr_pred = np.dot(coes[:4], data) + coes[4]
 
         predictions.append(curr_pred)
     return np.vstack(predictions).reshape((-1))
@@ -231,16 +230,16 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     # predict using lr
     lr_prediction = predict_lr(OPEN, HIGH, LOW, CLOSE, future_names)
     
-    # predict using lstm
-    lstm_prediction = predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, 
-                                   USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,USA_CINF, USA_CP, 
-                                   USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
-                                   USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, 
-                                   USA_GBVL, USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, 
-                                   USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
-                                   USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, 
-                                   USA_RFMI, USA_RSEA, USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV, 
-                                   future_names)
+##    # predict using lstm
+##    lstm_prediction = predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, 
+##                                   USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,USA_CINF, USA_CP, 
+##                                   USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
+##                                   USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, 
+##                                   USA_GBVL, USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, 
+##                                   USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
+##                                   USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, 
+##                                   USA_RFMI, USA_RSEA, USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV, 
+##                                   future_names)
     
     # predict using rf
     rf_prediction = predict_rf(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, 
@@ -260,7 +259,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, future_names)
 
     # predict using stacked model
-    stacked_prediction = predict_stacked(lgbm_prediction, lstm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
+    stacked_prediction = predict_stacked(lgbm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
     
     # optimize weight allocation strategy
     weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, stacked_prediction, settings)
@@ -296,11 +295,11 @@ def mySettings():
 #                            'F_RP','F_RY','F_SH','F_SX','F_TR','F_EB',
 #                            'F_GD','F_F']
      
-    settings['lookback']= 120
+    settings['lookback']= 504
     settings['budget']= 10**6
     settings['slippage']= 0.05
 
-    settings['beginInSample'] = '20180701'
+    settings['beginInSample'] = '20170119'
     settings['endInSample'] = '20190331'
 
     return settings

@@ -24,7 +24,7 @@
 - keras 2.2.4
 - lgbm 2.2.3
 - statsmodels 0.9.0
-- scikit-learn 0.20.0
+- scikit-learn 0.20.2
 - pandas 0.23.4
 
 
