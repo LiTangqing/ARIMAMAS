@@ -207,7 +207,7 @@ def stacked_momentum(OPEN, HIGH, LOW, CLOSE, preds, settings):
 
     pos = (preds - CLOSE[-1,1:])/CLOSE[-1,1:]
     pos = np.where((pos-slip < 0.01) & (pos+slip > -0.01), 0, pos) / np.nansum(abs(pos))
-    pos = np.insert(pos, 0, np.max(abs(pos))) # give some weight to cash
+    pos = np.insert(pos, 0, np.max(abs(pos))) # give some weight to cash to reduce position changes
     return pos
 
 def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
@@ -284,7 +284,7 @@ def mySettings():
              'F_SS', 'F_SX', 'F_TU', 'F_TY', 'F_UB', 'F_US', 'F_UZ', 'F_XX', 
              'F_YM', 'F_ZQ']#,'F_VF', 'F_VT', 'F_VW']
     # Futures Contracts
-    settings['markets'] = mape1 #['CASH','F_AD','F_BO','F_BP','F_C','F_CC',
+    settings['markets'] = ['CASH'] + mape1 #['CASH','F_AD','F_BO','F_BP','F_C','F_CC',
 #                            'F_CD','F_CL','F_CT','F_DX','F_EC','F_ED',
 #                            'F_ES','F_FC','F_FV','F_GC','F_HG','F_HO',
 #                            'F_JY','F_KC','F_LB','F_LC','F_LN','F_MD',
@@ -299,18 +299,30 @@ def mySettings():
 #                            'F_LQ','F_ND','F_NY','F_PQ','F_RR','F_RF',
 #                            'F_RP','F_RY','F_SH','F_SX','F_TR','F_EB',
 #                            'F_GD','F_F','F_VF','F_VT','F_VW']
-     
+
+    # for test set
+    
+    settings['beginInSample'] = '20170119'
+    settings['endInSample'] = '20190408'     
     settings['lookback']= 504
     settings['budget']= 10**6
     settings['slippage']= 0.05
-    settings['lgbm'] = pd.read_csv('',index_col=0)
-    settings['lstm'] = pd.read_csv('',index_col=0)
-    settings['rf'] = pd.read_csv('',index_col=0)
-    settings['lr'] = pd.read_csv('',index_col=0)
-    settings['sarima'] = pd.read_csv('',index_col=0)
-
-    settings['beginInSample'] = '20170119'
-    settings['endInSample'] = '20190331'
+    
+    # read in necessary data
+    index = pd.DatetimeIndex(start=settings['beginInSample'],
+                             end=settings['endInSample'],
+                             freq='B')
+    root = 'prediction_models/csv_for_stacking/'
+    settings['lgbm'] = pd.read_csv(root + 'LGBM_Model_Predictions_(2019)V2.csv', 
+                                   index_col=0).reindex(index=index, columns=mape1)
+    settings['lstm'] = pd.read_csv(root + 'LSTM_Model_Predictions_(2019)V2.csv',
+                                   index_col=0).reindex(index=index, columns=mape1)
+    settings['rf'] = pd.read_csv(root + 'RF_Model_Predictions_(2019)V2.csv',
+                                 index_col=0).reindex(index=index, columns=mape1)
+    settings['lr'] = pd.read_csv(root + 'LR_Model_Predictions_(2019)V2.csv', 
+                                 index_col=0).reindex(index=index, columns=mape1)
+    settings['sarima'] = pd.read_csv(root + 'SARIMA_Model_Predictions_(2019)V2.csv',
+                                     index_col=0).reindex(index=index, columns=mape1)
 
     return settings
 
