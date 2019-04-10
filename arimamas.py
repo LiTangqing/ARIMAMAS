@@ -6,24 +6,24 @@
 import numpy as np
 import pandas as pd
 
-from keras.preprocessing.sequence import TimeseriesGenerator
-from keras.models import load_model
+#from keras.preprocessing.sequence import TimeseriesGenerator
+#from keras.models import load_model
 
 from sklearn.linear_model import LinearRegression
-from sklearn.externals.joblib import load
+#from sklearn.externals.joblib import load
 from helper_functions import generate_features
 from portfolio_optimizer import slippage_costs
 
-import statsmodels.tsa.api as sm
+#import statsmodels.tsa.api as sm
 
-import lightgbm as lgb
+#import lightgbm as lgb
 
 # constants
 MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
 LOOKBACK_LSTM = 30
 LR_COE = "./prediction_models/LR_Model_Coefficients.csv"
 LGBM_MODEL = "./prediction_models/LGBM_saved_models/"
-STACKED_MODEL = "./prediction_models/Stacked_Model_Coefficients(WITHOUT LSTM).csv"
+STACKED_MODEL = "./prediction_models/Stacked_Model_Coefficients.csv"
 RF_SAVED_DEST = "./prediction_models/RF_saved_models/"
 SARIMA_SAVED_DEST = "./prediction_models/SARIMA_params.csv"
 
@@ -183,17 +183,19 @@ def predict_sarima(CLOSE, ticker_lists):
     print("SARIMA done!")
     return np.vstack(predicted).reshape((-1))
 
-def predict_stacked(LGBM, RF, LR, SARIMA, ticker_lists):
+def predict_stacked(LGBM, LSTM, RF, LR, SARIMA, ticker_lists):
     coe_data = pd.read_csv(STACKED_MODEL)
 
     predictions = []
     for i, TICKER in enumerate(ticker_lists):
         # data for current ticker 
-        data = np.array([LGBM[i], RF[i], LR[i], SARIMA[i]])#.reshape((-1))
+        data = np.array([LGBM[i], LSTM[i], RF[i], LR[i], SARIMA[i]])
+        
         # get base model coefficients for current ticker
-        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:5]
+        coes = coe_data.loc[coe_data['Future']==TICKER].values.reshape((-1))[:6]
+        
         # prediction = X*beta + intercept
-        curr_pred = np.dot(coes[:4], data) + coes[4]
+        curr_pred = np.dot(coes[:5], data) + coes[5]
 
         predictions.append(curr_pred)
     return np.vstack(predictions).reshape((-1))
@@ -206,9 +208,9 @@ def stacked_momentum(OPEN, HIGH, LOW, CLOSE, preds, settings):
                           settings['slippage'])
 
     pos = (preds - CLOSE[-1,1:])/CLOSE[-1,1:]
-    pos = np.where((pos-slip < 0.01) & (pos+slip > -0.01), 0, pos) / np.nansum(abs(pos))
-    pos = np.insert(pos, 0, np.max(abs(pos))) # give some weight to cash to reduce position changes
-    return pos
+    pos = np.where((pos-slip < 0.01) & (pos+slip > -0.01), 0, pos) / np.nansum(np.abs(pos))
+    pos = np.insert(pos, 0, np.nanmedian(np.abs(pos))) # give some weight to cash to reduce position changes
+    return np.nan_to_num(pos)
 
 def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
                     USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
@@ -264,7 +266,12 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     sarima_prediction = settings['sarima'].loc[date, :].values
     
     # predict using stacked model
-    stacked_prediction = predict_stacked(lgbm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
+    stacked_prediction = predict_stacked(lgbm_prediction,
+                                         lstm_prediction,
+                                         rf_prediction,
+                                         lr_prediction,
+                                         sarima_prediction,
+                                         future_names)
     
     # optimize weight allocation strategy
     weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, stacked_prediction, settings)
@@ -283,6 +290,7 @@ def mySettings():
              'F_MP', 'F_ND', 'F_PQ', 'F_RF', 'F_RP', 'F_RR', 'F_RY', 'F_SF', 
              'F_SS', 'F_SX', 'F_TU', 'F_TY', 'F_UB', 'F_US', 'F_UZ', 'F_XX', 
              'F_YM', 'F_ZQ']#,'F_VF', 'F_VT', 'F_VW']
+    
     # Futures Contracts
     settings['markets'] = ['CASH'] + mape1 #['CASH','F_AD','F_BO','F_BP','F_C','F_CC',
 #                            'F_CD','F_CL','F_CT','F_DX','F_EC','F_ED',
@@ -309,25 +317,34 @@ def mySettings():
     settings['slippage']= 0.05
     
     # read in necessary data
-    index = pd.DatetimeIndex(start=settings['beginInSample'],
-                             end=settings['endInSample'],
+    index = pd.DatetimeIndex(start='2019-01-02',
+                             end='2019-04-08',
                              freq='B')
-    root = 'prediction_models/csv_for_stacking/'
-    settings['lgbm'] = pd.read_csv(root + 'LGBM_Model_Predictions_(2019)V2.csv', 
-                                   index_col=0).reindex(index=index, columns=mape1)
-    settings['lstm'] = pd.read_csv(root + 'LSTM_Model_Predictions_(2019)V2.csv',
-                                   index_col=0).reindex(index=index, columns=mape1)
-    settings['rf'] = pd.read_csv(root + 'RF_Model_Predictions_(2019)V2.csv',
-                                 index_col=0).reindex(index=index, columns=mape1)
-    settings['lr'] = pd.read_csv(root + 'LR_Model_Predictions_(2019)V2.csv', 
-                                 index_col=0).reindex(index=index, columns=mape1)
-    settings['sarima'] = pd.read_csv(root + 'SARIMA_Model_Predictions_(2019)V2.csv',
-                                     index_col=0).reindex(index=index, columns=mape1)
-
+    root = './prediction_models/csv_for_stacking/'
+    
+    lgbm = pd.read_csv(root + 'LGBM_Model_Predictions_(2019)V2.csv', index_col=0)
+    lgbm.index = index
+    settings['lgbm'] = lgbm.reindex(columns=mape1)
+    
+    lstm = pd.read_csv(root + 'LSTM_Model_Predictions_(2019)V2.csv', index_col=0)
+    lstm.index = index
+    settings['lstm'] = lstm.reindex(columns=mape1)
+    
+    rf = pd.read_csv(root + 'RF_Model_Predictions_(2019)V2.csv', index_col=0)
+    rf.index = index
+    settings['rf'] = rf.reindex(columns=mape1)
+    
+    lr = pd.read_csv(root + 'LR_Model_Predictions_(2019)V2.csv', index_col=0)
+    lr.index = index
+    settings['lr'] = lr.reindex(columns=mape1)
+    
+    sarima = pd.read_csv(root + 'SARIMA_Model_Predictions_(2019)V2.csv', index_col=0)
+    sarima.index = index
+    settings['sarima'] = sarima.reindex(columns=mape1)
+                                
     return settings
 
 # Evaluate trading system defined in current file.
 if __name__ == '__main__':
     import quantiacsToolbox
-
     results = quantiacsToolbox.runts(__file__)
