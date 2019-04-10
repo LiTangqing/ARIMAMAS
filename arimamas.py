@@ -201,13 +201,13 @@ def predict_stacked(LGBM, LSTM, RF, LR, SARIMA, ticker_lists):
     return np.vstack(predictions).reshape((-1))
 
 def stacked_momentum(OPEN, HIGH, LOW, CLOSE, preds, settings):
-    slip = slippage_costs(HIGH[-1,1:],
-                          LOW[-1,1:],
-                          CLOSE[-2,1:],
-                          np.ones((len(settings['markets'])-1,)),
+    slip = slippage_costs(HIGH[-1,1:51],
+                          LOW[-1,1:51],
+                          CLOSE[-2,1:51],
+                          np.ones((len(settings['mape1']),)),
                           settings['slippage'])
 
-    pos = (preds - CLOSE[-1,1:])/CLOSE[-1,1:]
+    pos = (preds - CLOSE[-1,1:51])/CLOSE[-1,1:51]
     pos = np.where((pos-slip < 0.01) & (pos+slip > -0.01), 0, pos) / np.nansum(np.abs(pos))
     pos = np.insert(pos, 0, np.nanmedian(np.abs(pos))) # give some weight to cash to reduce position changes
     return np.nan_to_num(pos)
@@ -222,9 +222,10 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
                     USA_TVS, USA_UNR, USA_WINV):
     
     
-    future_names = settings['markets'][1:] # remove cash
+    future_names = settings['mape1'] 
     n_futures = len(future_names)
-    print("n_futures:", n_futures)
+    
+    
 #     # predict using lgbm
 #     lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE,
 #                                    USA_BC, USA_BOT, USA_CCR, USA_CF, 
@@ -274,7 +275,8 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
                                          future_names)
     
     # optimize weight allocation strategy
-    weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, stacked_prediction, settings)
+    weights = stacked_momentum(OPEN, HIGH, LOW, CLOSE, stacked_prediction, settings) 
+    weights = np.concatenate((weights, np.zeros(38)))
     
     return weights, settings
 
@@ -283,35 +285,30 @@ def mySettings():
     ''' Define your trading system settings here '''
 
     settings= {}
-    mape1 = ['F_AD', 'F_AE', 'F_AH', 'F_AX', 'F_BO', 'F_BP', 'F_C', 'F_CA',
+    mape1 = settings['mape1'] = ['F_AD', 'F_AE', 'F_AH', 'F_AX', 'F_BO', 'F_BP', 'F_C', 'F_CA',
              'F_CD', 'F_CF', 'F_DL', 'F_DM', 'F_DT', 'F_DX', 'F_EB', 'F_EC', 
              'F_ED', 'F_F', 'F_FC', 'F_FL', 'F_FM', 'F_FP', 'F_FV', 'F_FY', 
              'F_GC', 'F_GD', 'F_GS', 'F_GX', 'F_JY', 'F_LU', 'F_LX', 'F_MD',
              'F_MP', 'F_ND', 'F_PQ', 'F_RF', 'F_RP', 'F_RR', 'F_RY', 'F_SF', 
              'F_SS', 'F_SX', 'F_TU', 'F_TY', 'F_UB', 'F_US', 'F_UZ', 'F_XX', 
-             'F_YM', 'F_ZQ']#,'F_VF', 'F_VT', 'F_VW']
+             'F_YM', 'F_ZQ'] 
+    
+    non_mape1 = ['F_BC','F_BG', 'F_CC' ,'F_CL','F_CT', 'F_DZ', 'F_ES', 'F_FB',
+    'F_HG','F_HO','F_HP','F_KC', 'F_LB','F_LC','F_LN','F_LQ','F_LR', 'F_NG','F_NQ','F_NR','F_NY', 
+    'F_O','F_OJ', 'F_PA','F_PL', 'F_RB' ,'F_RU', 'F_S','F_SB','F_SH','F_SI','F_SM', 
+    'F_TR', 'F_VF','F_VT','F_VW','F_VX', 'F_W']
     
     # Futures Contracts
-    settings['markets'] = ['CASH'] + mape1 #['CASH','F_AD','F_BO','F_BP','F_C','F_CC',
-#                            'F_CD','F_CL','F_CT','F_DX','F_EC','F_ED',
-#                            'F_ES','F_FC','F_FV','F_GC','F_HG','F_HO',
-#                            'F_JY','F_KC','F_LB','F_LC','F_LN','F_MD',
-#                            'F_MP','F_NG','F_NQ','F_NR','F_O','F_OJ',
-#                            'F_PA','F_PL','F_RB','F_RU','F_S','F_SB',
-#                            'F_SF','F_SI','F_SM','F_TU','F_TY','F_US',
-#                            'F_W','F_XX','F_YM','F_AX','F_CA','F_DT',
-#                            'F_UB','F_UZ','F_GS','F_LX','F_SS','F_DL',
-#                            'F_ZQ','F_VX','F_AE','F_BG','F_BC','F_LU',
-#                            'F_DM','F_AH','F_CF','F_DZ','F_FB','F_FL',
-#                            'F_FM','F_FP','F_FY','F_GX','F_HP','F_LR',
-#                            'F_LQ','F_ND','F_NY','F_PQ','F_RR','F_RF',
-#                            'F_RP','F_RY','F_SH','F_SX','F_TR','F_EB',
-#                            'F_GD','F_F','F_VF','F_VT','F_VW']
-
-    # for test set
+    # all 88 
+    settings['markets'] = ['CASH'] + mape1 + non_mape1 
+    print('Number of futures:', len(settings['markets']))
     
     settings['beginInSample'] = '20170119'
-    settings['endInSample'] = '20190408'     
+    settings['endInSample'] = '20190331' 
+
+    # settings['beginInSample'] = '20170119'
+    # settings['endInSample'] = '20190408' 
+
     settings['lookback']= 504
     settings['budget']= 10**6
     settings['slippage']= 0.05
