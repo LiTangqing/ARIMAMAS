@@ -6,8 +6,8 @@
 import numpy as np
 import pandas as pd
 
-#from keras.preprocessing.sequence import TimeseriesGenerator
-#from keras.models import load_model
+from keras.preprocessing.sequence import TimeseriesGenerator
+from keras.models import load_model
 
 from sklearn.linear_model import LinearRegression
 from sklearn.externals.joblib import load
@@ -19,7 +19,7 @@ import statsmodels.tsa.api as sm
 import lightgbm as lgb
 
 # constants
-#MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
+MODEL_SAVED_DEST = "./prediction_models/LSTM_saved_models/"
 LOOKBACK_LSTM = 30
 LR_COE = "./prediction_models/LR_Model_Coefficients.csv"
 LGBM_MODEL = "./prediction_models/LGBM_saved_models/"
@@ -27,54 +27,54 @@ STACKED_MODEL = "./prediction_models/Stacked_Model_Coefficients(WITHOUT LSTM).cs
 RF_SAVED_DEST = "./prediction_models/RF_saved_models/"
 SARIMA_SAVED_DEST = "./prediction_models/SARIMA_params.csv"
 
-# def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
-#                     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
-#                     USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL,
-#                     USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI,
-#                     USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, USA_NFIB, USA_NFP, USA_NLTTF,
-#                     USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, USA_RSM, USA_RSY,
-#                     USA_TVS, USA_UNR, USA_WINV, ticker_lists):
-#     '''predict future close price using pretrained lstm model
-#        return: np array of predicted close price of shape (n_futures,) 
-#                the order is the same as settings['markets']
-#     '''
+def predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,
+                    USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
+                    USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL,
+                    USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI,
+                    USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, USA_NFIB, USA_NFP, USA_NLTTF,
+                    USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, USA_RSM, USA_RSY,
+                    USA_TVS, USA_UNR, USA_WINV, ticker_lists):
+    '''predict future close price using pretrained lstm model
+       return: np array of predicted close price of shape (n_futures,) 
+               the order is the same as settings['markets']
+    '''
 
-#     print("===========================")
-#     print("LSTM is predicting...\nLSTM foresees a lot of work.\nLSTM works hard.")
-#     print("LSTM is slow but smart.\nBe like LSTM.")
-#     #print(u'\U0001F37A')
-#     predicted = []
-#     for i, TICKER in enumerate(ticker_lists):
-#         print("LSTM: working on "+TICKER+"...")
-#         # load model and scaling parameter
-#         model = load_model(MODEL_SAVED_DEST + TICKER+ '.h5')
-#         scale_params = np.load(MODEL_SAVED_DEST+ TICKER + '_scale_params.npz')
-#         mu_y = scale_params['average_y']
-#         sd_y = scale_params['std_dev_y']
-#         mu_X = scale_params['average_X']
-#         sd_X = scale_params['std_dev_X']
+    print("===========================")
+    print("LSTM is predicting...\nLSTM foresees a lot of work.\nLSTM works hard.")
+    print("LSTM is slow but smart.\nBe like LSTM.")
+    #print(u'\U0001F37A')
+    predicted = []
+    for i, TICKER in enumerate(ticker_lists):
+        print("LSTM: working on "+TICKER+"...")
+        # load model and scaling parameter
+        model = load_model(MODEL_SAVED_DEST + TICKER+ '.h5')
+        scale_params = np.load(MODEL_SAVED_DEST+ TICKER + '_scale_params.npz')
+        mu_y = scale_params['average_y']
+        sd_y = scale_params['std_dev_y']
+        mu_X = scale_params['average_X']
+        sd_X = scale_params['std_dev_X']
         
-#         # preprocess the data - concate, scale
-#         X = np.hstack((OPEN[:,i+1].reshape(-1,1), HIGH[:,i+1].reshape(-1,1), LOW[:,i+1].reshape(-1,1), CLOSE[:,i+1].reshape(-1,1),
-#                     USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI, 
-#                     USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR, USA_DURET,
-#                     USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL, USA_GPAY, USA_HI, USA_IMPX,
-#                     USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
-#                     USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, 
-#                     USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV))
+        # preprocess the data - concate, scale
+        X = np.hstack((OPEN[:,i+1].reshape(-1,1), HIGH[:,i+1].reshape(-1,1), LOW[:,i+1].reshape(-1,1), CLOSE[:,i+1].reshape(-1,1),
+                    USA_BC, USA_BI, USA_BOT, USA_CCPI, USA_CCR, USA_CF, USA_CFNAI, 
+                    USA_CINF, USA_CP, USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR, USA_DURET,
+                    USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, USA_GBVL, USA_GPAY, USA_HI, USA_IMPX,
+                    USA_IMVOL, USA_IP, USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
+                    USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, USA_RFMI, USA_RSEA, 
+                    USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV))
 
-#         X = (X - mu_X) / sd_X
-#         y_true = CLOSE[:,i+1] # dummy y - just to fill in 
+        X = (X - mu_X) / sd_X
+        y_true = CLOSE[:,i+1] # dummy y - just to fill in 
 
-#         to_pred_generator = TimeseriesGenerator(X, y_true,
-#                                     length=30, 
-#                                     batch_size=1) 
+        to_pred_generator = TimeseriesGenerator(X, y_true,
+                                    length=30, 
+                                    batch_size=1) 
 
-#         y_pred = model.predict_generator(to_pred_generator)
-#         y_pred = y_pred * sd_y + mu_y
-#         predicted.append(y_pred)
-#     print("LSTM: done!")
-#     return np.vstack(predicted).reshape((-1))
+        y_pred = model.predict_generator(to_pred_generator)
+        y_pred = y_pred * sd_y + mu_y
+        predicted.append(y_pred)
+    print("LSTM: done!")
+    return np.vstack(predicted).reshape((-1))
 
 def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
     coe_data = pd.read_csv(LR_COE)
@@ -92,7 +92,6 @@ def predict_lr(OPEN, HIGH, LOW, CLOSE, ticker_lists):
     return predictions
 
 def predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, ticker_lists):
-	
     predictions = []
     for i, TICKER in enumerate(ticker_lists):
         filename = LGBM_MODEL + TICKER + '.txt'
@@ -160,7 +159,7 @@ def predict_sarima(CLOSE, ticker_lists):
     # Load grid-searched params from csv
     params = pd.read_csv(SARIMA_SAVED_DEST, index_col=0)
     
-    print("Super ARIMAMA getting to work done!")
+    print("Super ARIMAMA getting to work!")
     for i, TICKER in enumerate(ticker_lists):
         print("SARIMA: working on "+TICKER+"...")
         
@@ -208,7 +207,7 @@ def stacked_momentum(OPEN, HIGH, LOW, CLOSE, preds, settings):
 
     pos = (preds - CLOSE[-1,1:])/CLOSE[-1,1:]
     pos = np.where((pos-slip < 0.01) & (pos+slip > -0.01), 0, pos) / np.nansum(abs(pos))
-    pos = np.insert(pos, 0, 0) # give 0 weight to cash LOL
+    pos = np.insert(pos, 0, np.max(abs(pos))) # give some weight to cash
     return pos
 
 def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
@@ -224,40 +223,46 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, settings,
     future_names = settings['markets'][1:] # remove cash
     n_futures = len(future_names)
     print("n_futures:", n_futures)
-    # predict using lgbm
-    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, future_names)
+#     # predict using lgbm
+#     lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE,
+#                                    USA_BC, USA_BOT, USA_CCR, USA_CF, 
+#                                    USA_CPICM, USA_GPAY, future_names)
 
-    # predict using lr
-    lr_prediction = predict_lr(OPEN, HIGH, LOW, CLOSE, future_names)
+#     # predict using lr
+#     lr_prediction = predict_lr(OPEN, HIGH, LOW, CLOSE, future_names)
     
-##    # predict using lstm
-##    lstm_prediction = predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, 
-##                                   USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,USA_CINF, USA_CP, 
-##                                   USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
-##                                   USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, 
-##                                   USA_GBVL, USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, 
-##                                   USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
-##                                   USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, 
-##                                   USA_RFMI, USA_RSEA, USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV, 
-##                                   future_names)
+#    # predict using lstm
+#    lstm_prediction = predict_lstm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, 
+#                                   USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,USA_CINF, USA_CP, 
+#                                   USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
+#                                   USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, 
+#                                   USA_GBVL, USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, 
+#                                   USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
+#                                   USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, 
+#                                   USA_RFMI, USA_RSEA, USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV, 
+#                                   future_names)
     
-    # predict using rf
-    rf_prediction = predict_rf(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, 
-                                   USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,USA_CINF, USA_CP, 
-                                   USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
-                                   USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, 
-                                   USA_GBVL, USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, 
-                                   USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
-                                   USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, 
-                                   USA_RFMI, USA_RSEA, USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV, 
-                                   future_names)
+#     # predict using rf
+#     rf_prediction = predict_rf(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BI, USA_BOT, 
+#                                    USA_CCPI, USA_CCR, USA_CF, USA_CFNAI,USA_CINF, USA_CP, 
+#                                    USA_CPI, USA_CPIC, USA_CPICM, USA_CU, USA_DUR,
+#                                    USA_DURET, USA_EXPX, USA_EXVOL, USA_FBI, USA_FRET, 
+#                                    USA_GBVL, USA_GPAY, USA_HI, USA_IMPX, USA_IMVOL, USA_IP, 
+#                                    USA_IPMOM, USA_LEI, USA_LFPR, USA_MP, USA_MPAY, USA_NAHB, 
+#                                    USA_NFIB, USA_NFP, USA_NLTTF, USA_NPP, USA_PFED, USA_PPIC, 
+#                                    USA_RFMI, USA_RSEA, USA_RSM, USA_RSY, USA_TVS, USA_UNR, USA_WINV, 
+#                                    future_names)
     
-    # predict using sarima
-    sarima_prediction = predict_sarima(CLOSE, future_names)
+#     # predict using sarima
+#     sarima_prediction = predict_sarima(CLOSE, future_names)
 
-    # predict using lgbm
-    lgbm_prediction = predict_lgbm(OPEN, HIGH, LOW, CLOSE, USA_BC, USA_BOT, USA_CCR, USA_CF, USA_CPICM, USA_GPAY, future_names)
-
+    date = pd.to_datetime(DATE[-1], format="%Y%m%d")
+    lgbm_prediction = settings['lgbm'].loc[date, :].values
+    lstm_prediction = settings['lstm'].loc[date, :].values
+    rf_prediction = settings['rf'].loc[date, :].values
+    lr_prediction = settings['lr'].loc[date, :].values
+    sarima_prediction = settings['sarima'].loc[date, :].values
+    
     # predict using stacked model
     stacked_prediction = predict_stacked(lgbm_prediction, rf_prediction, lr_prediction, sarima_prediction, future_names)
     
@@ -293,11 +298,16 @@ def mySettings():
 #                            'F_FM','F_FP','F_FY','F_GX','F_HP','F_LR',
 #                            'F_LQ','F_ND','F_NY','F_PQ','F_RR','F_RF',
 #                            'F_RP','F_RY','F_SH','F_SX','F_TR','F_EB',
-#                            'F_GD','F_F']
+#                            'F_GD','F_F','F_VF','F_VT','F_VW']
      
     settings['lookback']= 504
     settings['budget']= 10**6
     settings['slippage']= 0.05
+    settings['lgbm'] = pd.read_csv('',index_col=0)
+    settings['lstm'] = pd.read_csv('',index_col=0)
+    settings['rf'] = pd.read_csv('',index_col=0)
+    settings['lr'] = pd.read_csv('',index_col=0)
+    settings['sarima'] = pd.read_csv('',index_col=0)
 
     settings['beginInSample'] = '20170119'
     settings['endInSample'] = '20190331'
